@@ -1,4 +1,8 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+let rawBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+if (rawBaseUrl && !rawBaseUrl.startsWith('http://') && !rawBaseUrl.startsWith('https://')) {
+  rawBaseUrl = `https://${rawBaseUrl}`;
+}
+const API_BASE_URL = rawBaseUrl.replace(/\/+$/, '');
 
 export async function mockDelay<T>(data: T, ms = 600): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(data), ms));
@@ -19,7 +23,8 @@ async function request<T>(
   }
 
   const { signal, ...init } = options;
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const url = `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  const response = await fetch(url, {
     ...init,
     signal,
     headers: {
