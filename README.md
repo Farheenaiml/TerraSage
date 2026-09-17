@@ -1,27 +1,19 @@
-# TerraSage - AI Biodiversity Intelligence System
+# TerraSage — AI Biodiversity Intelligence System
 ### Darukaa.Earth AI Biodiversity Intelligence Chatbot Challenge
 
-TerraSage is an AI-powered conversational environmental intelligence platform designed to behave like an **AI Environmental Scientist**, not a generic chatbot. It connects live satellite and ground telemetry, an authoritative scientific RAG layer, multi-variable ecological reasoning, and evidence-backed recommendations to tackle complex biodiversity and land degradation challenges.
+TerraSage is an AI-powered conversational environmental intelligence platform designed to behave like an **AI Environmental Scientist**, not a generic chatbot. Grounded in **5 telemetry layers** (Soil, Climate, Land Cover, Biodiversity, Human Impact), a **535-chunk pgvector scientific RAG layer** (FAO, IPCC), **multi-variable mathematical reasoning** (≥3 cross-domain variables), and evidence-backed ecological restoration recommendations.
 
 ---
 
-## Core Highlights & Challenge Compliance
-
-| Requirement | Implementation | Authoritative Source |
-| :--- | :--- | :--- |
-| **Soil Health** | pH, Organic Carbon %, Depth, and Baseline Soil Stewardship | SoilGrids & Field Diagnostics |
-| **Climate Factors** | Surface Temperature, Annual/Daily Precipitation | NASA POWER API |
-| **Land Cover / Use** | 10m High-Resolution Land Classification | ESA WorldCover 2021 |
-| **Biodiversity Indicators** | Observed Species Richness, Occurrence Counts | GBIF (Global Biodiversity Information Facility) |
-| **Human Impact** | Real-time PM2.5, PM10, European & US AQI, Tree Cover Loss | Copernicus CAMS / Open-Meteo & Hansen GFC |
-| **Scientific RAG** | 535 Ingested Chunks in PostgreSQL with Vector Embeddings | FAO Recarbonization of Global Soils, IPCC AR6 WGII |
-| **Multi-Metric Reasoning** | Cross-Domain Engine connecting >= 3 variables | CrossDomainEvaluator (no single-variable answers) |
-| **Conversational Intelligence**| Clarification triggers on incomplete data, multi-turn memory | Autonomous Context Engine |
-| **Recommendation Engine** | Measurable targets (+15-25% SOC over 2-3 years), non-obvious actions | FAO & IPCC grounded rule definitions |
+## 🔗 Official Submission Links
+- **GitHub Repository**: [https://github.com/Farheenaiml/TerraSage](https://github.com/Farheenaiml/TerraSage)
+- **Live Cloud Application**: [https://terrasage-frontend.onrender.com](https://terrasage-frontend.onrender.com)
+- **Live Interactive API Documentation (Swagger)**: [https://terrasage-backend.onrender.com/docs](https://terrasage-backend.onrender.com/docs)
+- **Official Word Submission Document (.docx)**: [`docs/TerraSage_Darukaa_Submission.docx`](docs/TerraSage_Darukaa_Submission.docx)
 
 ---
 
-## Architecture & Data Pipeline
+## 🏛️ System Architecture & Information Pipeline
 
 <p align="center">
   <img src="docs/images/architecture_flow.png" alt="TerraSage System Architecture Flow" width="950" />
@@ -35,7 +27,7 @@ TerraSage is an AI-powered conversational environmental intelligence platform de
 |                  Conversational Context Engine                    |
 |  - Extracts location, coordinates, crop, land use, SOC            |
 |  - Triggers clarification questions if context is lacking (< 3)  |
-|  - Maintains multi-turn conversation memory                       |
+|  - Maintains multi-turn conversation memory (HUD Known/Missing)   |
 +---------------------------------+---------------------------------+
                                   |
                                   v
@@ -71,222 +63,136 @@ TerraSage is an AI-powered conversational environmental intelligence platform de
 
 ---
 
-## Key Features
+## 🌿 The Five Telemetry Layers
 
-### 1. AI Environmental Scientist Persona
-Unlike generic LLMs, TerraSage never produces generic advisory advice. It operates as an authoritative environmental researcher:
-- **Refuses Unfounded Guesses**: If an agronomist asks about declining yields without specifying soil or rainfall history, TerraSage pauses and queries the exact missing variables.
-- **Synthesizes Complex Variables**: Connects Soil Organic Carbon (SOC), precipitation deficits, and historical tillage regimes into an integrated ecological model.
-- **Cites Peer-Reviewed Science**: Integrates 535 vectorized knowledge chunks directly from FAO Recarbonization of Global Soils (GSOCseq) and IPCC Climate Change & Land reports.
-
-### 2. Five Telemetry Layers
-1. **Soil Health**: Soil organic carbon (cg/kg), pH, bulk density, CEC via SoilGrids REST API.
-2. **Climate**: Precipitation, surface temperature, humidity, solar radiation via NASA POWER.
-3. **Land Cover**: Sentinel-2 10-meter land cover classifications via ESA WorldCover.
-4. **Biodiversity**: Observed species count, native richness, and invasive species flags via GBIF.
-5. **Human Impact**: Real-time atmospheric particulates (PM2.5, PM10, AQI) via Copernicus CAMS & Hansen Global Forest Change deforestation monitoring.
-
-### 3. Actionable Recommendation Engine
-- **Quantified Targets**: Every proposed restoration intervention defines a measurable, multi-year ecological target (e.g., *Increase SOC from 0.3% to 0.45% (+15-25% relative) within 24-36 months*).
-- **Lifecycle Tracking**: Recommendations can be filtered, reviewed, and transitioned through stages: `proposed` -> `accepted` -> `in_progress` -> `implemented`.
-- **Implementation Trade-offs**: Outlines direct implementation costs, co-benefits, and risks for farmers.
+| Telemetry Layer | Provider & Source | Extracted Parameters | Ecological Purpose |
+|:---|:---|:---|:---|
+| **1. Soil Health** | ISRIC SoilGrids REST API (v2.0) | Soil Organic Carbon (SOC cg/kg), Soil pH, Bulk Density (cg/cm³), CEC | Determines microbial substrate availability, root impedance, and baseline nutrient retention. |
+| **2. Climatology** | NASA POWER Agroclimatology API | Mean Annual Precipitation (mm/year), Temperature (°C), Solar Insolation | Governs photosynthetic potential, drought stress risk, and species climatic envelopes. |
+| **3. Land Cover** | ESA WorldCover 10m Sentinel-2 | Canopy cover percentage, land classification code (cropland, tree cover, bare ground) | Identifies habitat fragmentation, tree loss trajectory, and vegetative buffer deficits. |
+| **4. Biodiversity** | GBIF Occurrence API | Native species count, invasive occurrences, endangered taxa counts | Establishes biological baseline and targets for native flora/fauna recruitment. |
+| **5. Human Impact** | Copernicus CAMS / Open-Meteo | PM2.5 (μg/m³), PM10, Nitrogen Dioxide (NO₂), European Air Quality Index (AQI) | Assesses anthropogenic stressors, atmospheric nitrogen deposition, and smoke exposure. |
 
 ---
 
-## Project Structure
+## 🗄️ Database Architecture & Vector Schema
 
-```
-TerraSage/
-├── backend/                        # FastAPI Backend Application
-│   ├── app/
-│   │   ├── api/                    # API Route Controllers
-│   │   │   ├── auth.py             # Authentication & Demo Profile
-│   │   │   ├── conversations.py    # Multi-turn Chat & Telemetry HUD
-│   │   │   ├── dashboard.py        # Aggregated Ecosystem Metrics
-│   │   │   ├── environmental.py    # 5-Layer Telemetry Providers
-│   │   │   ├── evidence.py         # 535-Chunk Scientific RAG Explorer
-│   │   │   ├── reasoning.py        # Multi-Variable Reasoning API
-│   │   │   └── recommendations.py  # Restoration Recommendations
-│   │   ├── conversations/          # Conversational Subsystem
-│   │   ├── core/                   # Security, Config, Database Engine
-│   │   ├── environmental/          # Telemetry Providers (NASA, ESA, GBIF, Soil, CAMS)
-│   │   ├── llm/                    # Groq, OpenAI & Scientist Fallback Factory
-│   │   ├── models/                 # SQLAlchemy ORM Models
-│   │   ├── rag/                    # Vector Search & Document Ingestion
-│   │   ├── reasoning/              # Cross-Domain Reasoning Rules
-│   │   └── recommendations/        # Recommendation Engine
-│   ├── tests/                      # Automated Pytest Suite
-│   └── requirements.txt            # Python Dependencies
-├── frontend/                       # React 18 + TypeScript + Vite
-│   ├── src/
-│   │   ├── components/             # Reusable UI & Telemetry HUD Components
-│   │   ├── pages/                  # Dashboard, Conversations, Environment, Evidence
-│   │   ├── services/               # API Client Services
-│   │   └── App.tsx                 # Route Hierarchy & Navigation
-│   ├── package.json                # Frontend Dependencies
-│   └── vite.config.ts              # Vite Bundler Configuration
-├── docs/                           # Documentation & Architecture Assets
-│   └── images/                     # System Diagrams
-└── README.md                       # Main Documentation
-```
+The persistent storage engine is **PostgreSQL 16** with native **`pgvector`** extension support:
+
+- **`documents` & `document_chunks`**: Stores 535 ingested research chunks from FAO and IPCC with 384-dimensional dense vector embeddings, document metadata, section headers, and authoring organizations.
+- **`environmental_observations`**: Normalized time-series satellite and sensor telemetry (SoilGrids, NASA, ESA, GBIF, Copernicus).
+- **`recommendations`**: Evidence-backed restoration actions with measurable ecological targets and full lifecycle status (`proposed` → `accepted` → `in_progress` → `implemented`).
+- **`conversations` & `messages`**: Multi-turn conversational memory tracking extracted `known_variables` and `missing_variables` for HUD telemetry synchronization.
 
 ---
 
-## Getting Started
+## 🧪 Detailed Feature Walkthrough & Testing Guide
+
+Reviewers can verify all capabilities directly on the live deployment ([`https://terrasage-frontend.onrender.com`](https://terrasage-frontend.onrender.com)) or locally:
+
+### 1. Conversational Intelligence & Telemetry HUD (`/conversations`)
+- **Where to navigate**: Click **Conversations** in the sidebar, then click **+ New Conversation**.
+- **Initial State**: Notice that the right-hand **Environmental Context** panel starts clean with no premature missing variables.
+- **Test Case A (Ambiguous / Incomplete Input)**:
+  - In the chat input, send:
+    ```text
+    Biodiversity is declining on my land.
+    ```
+  - **What happens**: The AI Environmental Scientist **refuses to guess blindly**. It responds with a targeted **Clarification Request** (*"Can you provide soil organic carbon %, rainfall pattern, and land use type?"*). The right HUD dynamically populates the required missing parameters.
+- **Test Case B (Multi-Variable Scientific Synthesis)**:
+  - In the chat input, provide the missing parameters:
+    ```text
+    Soil organic carbon is 0.4%, annual rainfall is 420mm semi-arid, monoculture wheat for 6 years, with depleted earthworms.
+    ```
+  - **What happens**: 
+    1. The right HUD immediately moves the parameters into **KNOWN VARIABLES**.
+    2. The reasoning engine performs cross-domain synthesis across all 4 parameters.
+    3. The model returns a structured **[AI Environmental Scientist Assessment]** table comparing metrics to FAO/IPCC benchmarks.
+    4. Proposes concrete interventions (e.g., **Legume Intercropping & Stubble Retention**) targeting a measurable **+15–25% SOC increase** over 24–36 months with peer-reviewed citations.
+
+### 2. Live Telemetry Profiling (`/environment`)
+- **Where to navigate**: Click **Environmental Profile** in the sidebar.
+- **How to test**:
+  - In the **Preset Locations** dropdown, select **`Nashik Farm, MH`** (Latitude: `19.9975`, Longitude: `73.7898`).
+  - Click **Query Site Data**.
+- **What happens**: Real-time telemetry cards load across all 5 domains:
+  - **SoilGrids**: Soil Organic Carbon, pH, Bulk Density.
+  - **NASA POWER**: Mean annual precipitation, temperature, solar insolation.
+  - **ESA WorldCover**: 10-meter high-resolution land cover distribution.
+  - **GBIF**: Native biodiversity occurrence count.
+  - **Copernicus CAMS**: PM2.5, PM10, and European Air Quality Index.
+
+### 3. Ecosystem Health Dashboard (`/dashboard`)
+- **Where to navigate**: Click **Dashboard** in the sidebar.
+- **What happens**: Displays the aggregated health status of the active agricultural landscape, showing **10 environmental factors available**, radar scores, and active intervention cards.
+
+### 4. Actionable Recommendations Engine (`/recommendations`)
+- **Where to navigate**: Click **Recommendations** in the sidebar.
+- **How to test**:
+  - Click through the status filter pills (**All**, **Proposed**, **Accepted**, **In Progress**, **Implemented**).
+  - Click into any card (e.g., *Legume Intercropping* or *Conservation Tillage*).
+- **What happens**: Displays quantified ecological impact estimates (+15–25% SOC), feasibility trade-offs, and linked scientific citations.
+
+### 5. Scientific Evidence Library (`/evidence`)
+- **Where to navigate**: Click **Evidence Library** in the sidebar.
+- **How to test**:
+  - Type `soil organic carbon` into the search bar, or click any of the 1-click **Popular Topics chips** (`Soil Organic Carbon`, `Biodiversity`, `Agroforestry`, `IPCC`).
+- **What happens**: Instantly filters and retrieves peer-reviewed sources and vector-indexed evidence chunks backing TerraSage's scientific assessments.
+
+---
+
+## 💻 Local Setup & Execution Guide
 
 ### Prerequisites
 - **Python**: 3.10+
 - **Node.js**: 18+ and npm
-- **PostgreSQL**: 15+ with the `pgvector` extension installed
+- **PostgreSQL**: 15+ with `pgvector` extension
 
 ### 1. Backend Setup
-
 ```bash
 cd backend
 python -m venv venv
 
+# Activate Virtual Environment:
 # Windows PowerShell:
-.env\Scripts\Activate.ps1
-# Linux/macOS:
+.\venv\Scripts\Activate.ps1
+# macOS / Linux:
 # source venv/bin/activate
 
 pip install -r requirements.txt
-```
 
-#### Environment Variables (`backend/.env`)
-```env
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/terrasage
-SECRET_KEY=your-secure-jwt-secret-key
-ENVIRONMENT=development
-
-# Cloud LLM (Groq Llama 3.3 / GPT-OSS):
-LLM_PROVIDER=groq
-LLM_API_KEY=gsk_your_groq_api_key_here
-LLM_MODEL=openai/gpt-oss-20b
-
-# (Optional: Fallback to built-in Environmental Scientist):
-# LLM_PROVIDER=mock
-```
-
-#### Start Backend Server:
-```bash
+# Start FastAPI Backend Server:
 uvicorn app.main:app --reload --port 8000
 ```
-Backend API will be accessible at: `http://localhost:8000`
-Interactive Swagger Docs: `http://localhost:8000/docs`
-
----
+- Local API is accessible at: `http://localhost:8000`
+- Interactive Swagger UI: `http://localhost:8000/docs`
 
 ### 2. Frontend Setup
-
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-The Frontend UI will be accessible at: `http://localhost:5173`
+- Local Frontend UI is accessible at: `http://localhost:5173`
 
----
-
-## Step-by-Step Testing & Verification Guide
-
-### Scenario 1: Interactive Chat with Multi-Variable Clarification
-1. Navigate to **Conversations** (`http://localhost:5173/conversations`).
-2. Click **+ New Conversation**. Notice that the right-hand **Environmental Context** panel starts clean (no premature missing variables).
-3. Send a vague query:
-   ```text
-   Biodiversity is declining on my farm.
-   ```
-4. **Expected Behavior**: The AI Environmental Scientist acknowledges the concern and triggers a **Clarification Request** asking for missing variables (soil metrics, precipitation, and past farming practices). The right-hand panel now highlights the required variables.
-5. Provide the multi-variable data:
-   ```text
-   Soil organic carbon: 0.3%, rainfall: 420mm semi-arid, monoculture wheat for 6 years, degraded micro-arthropods.
-   ```
-6. **Expected Behavior**: The model evaluates cross-variable synergies (SOC + precipitation + crop rotation), renders bold scientific analysis, cites FAO/IPCC evidence, and proposes concrete interventions (such as **Legume Intercropping & Reduced Tillage** targeting +15-25% SOC). The right HUD reflects the identified variables.
-
-### Scenario 2: Live Environmental Telemetry Profiling
-1. Navigate to **Environment Profile** (`http://localhost:5173/environment`).
-2. Select the **Nashik Farm** preset (Latitude: `19.9975`, Longitude: `73.7898`).
-3. Click **Query Site Data**.
-4. **Expected Behavior**: Real-time telemetry cards load across all 5 domains:
-   - **SoilGrids**: SOC, pH, bulk density.
-   - **NASA POWER**: Mean annual rainfall, solar insolation, temperature.
-   - **ESA WorldCover**: High-resolution land cover distribution.
-   - **GBIF**: Native biodiversity occurrence count.
-   - **Copernicus CAMS**: PM2.5, PM10, and European AQI.
-
-### Scenario 3: Evidence Library & RAG
-1. Navigate to **Evidence** (`http://localhost:5173/evidence`).
-2. Type `soil organic carbon` or `agroforestry` in the search bar.
-3. **Expected Behavior**: Semantic retrieval surfaces indexed chunks from the FAO GSOCseq report and IPCC Climate Change & Land assessments with exact section citations and relevancy rankings.
-
----
-
-
----
-
-## Cloud Deployment Guide
-
-The repository includes production-ready configurations for **Render**, **Vercel**, and **Docker**:
-
-### Option 1: 1-Click Deployment on Render.com (Recommended)
-Because [`render.yaml`](render.yaml) is configured in the repository root:
-1. Sign in to [Render.com](https://render.com) using your GitHub account.
-2. Click **New +** -> **Blueprint**.
-3. Select the repository: `Farheenaiml/TerraSage`.
-4. Render will automatically detect the blueprint and provision:
-   - **Cloud PostgreSQL** (Database name: `terrasage`)
-   - **FastAPI Web Service** (`terrasage-backend`)
-   - **React + Vite Static Site** (`terrasage-frontend`)
-5. In the environment variables for `terrasage-backend`, enter your `LLM_API_KEY` (Groq or OpenAI key).
-6. Click **Apply**. Both your backend API and frontend will be live with free SSL certificates!
-
----
-
-### Option 2: Vercel (Frontend) + Render / Railway (Backend)
-- **Frontend (Vercel)**:
-  1. Go to [Vercel](https://vercel.com) and click **Add New Project** -> import `Farheenaiml/TerraSage`.
-  2. Set **Root Directory** to `frontend`.
-  3. Under **Environment Variables**, add:
-     - `VITE_API_BASE_URL`: `https://your-backend-service.onrender.com`
-  4. Click **Deploy**. Vercel will build and serve the app with global CDN distribution.
-- **Backend (Render / Railway)**:
-  1. Create a new Web Service pointing to `Farheenaiml/TerraSage` (Root Directory: `backend`).
-  2. Build Command: `pip install -r requirements.txt`
-  3. Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-  4. Add environment variables from `backend/.env.example`.
-
----
-
-### Option 3: Full-Stack Docker Compose (VPS / Cloud VM)
-Run the entire ecosystem (pgvector database, backend, and Nginx-served frontend) with one command:
-
+### 3. Single-Command Launch via Docker Compose
+To run the complete ecosystem (pgvector database, FastAPI backend, and Nginx-served frontend) with one command:
 ```bash
-# Clone the repository
-git clone https://github.com/Farheenaiml/TerraSage.git
-cd TerraSage
-
-# Launch all 3 services
 docker-compose up -d --build
 ```
-- Frontend: `http://localhost:80`
-- Backend API: `http://localhost:8000/docs`
-- PostgreSQL pgvector: `localhost:5432`
-
-## Automated Test Suite
-
-Run the full automated test suite to verify backend stability and compliance:
-
-```bash
-cd backend
-pytest tests/ -v
-```
 
 ---
 
-## Scientific Grounding & Citations
-- **FAO (2020)**: *Global Soil Organic Carbon Sequestration Potential (GSOCseq)*. Food and Agriculture Organization of the United Nations, Rome.
-- **IPCC (2019)**: *Special Report on Climate Change, Desertification, Land Degradation, Sustainable Land Management, Food Security, and Greenhouse Gas Fluxes in Terrestrial Ecosystems (SRCCL)*.
-- **ISRIC (2021)**: *SoilGrids250m 2.0: Global gridded soil information based on machine learning*.
-- **GBIF.org (2024)**: *GBIF Occurrence Download*. Global Biodiversity Information Facility.
-- **ESA (2021)**: *WorldCover 10m 2021 v200*. European Space Agency.
+## 🚀 Cloud Infrastructure & CI/CD
+- **Blueprint-Driven IaC**: [`render.yaml`](render.yaml) automatically provisions the PostgreSQL pgvector database, the FastAPI backend web service, and the React global CDN frontend.
+- **Continuous Deployment**: Any commit pushed to `main` on [https://github.com/Farheenaiml/TerraSage](https://github.com/Farheenaiml/TerraSage) triggers zero-downtime automated deployment.
+- **Anti-Hallucination & Resilience**: Dual-mode LLM provider (ultra-fast Groq Llama-3.3 / GPT-OSS with automatic fallback to deterministic Environmental Scientist v1).
+
+---
+
+## 👥 Repository Access Notes
+The GitHub repository is public and accessible immediately at [https://github.com/Farheenaiml/TerraSage](https://github.com/Farheenaiml/TerraSage). If private repository evaluation is preferred, access can be granted directly to the Darukaa review team:
+- `ankita.dasgupta@darukaa.com`
+- `harsh.kumar@darukaa.com`
+- `utkarsh.gauniyal@darukaa.com`
+- `guneet.mutreja@darukaa.com`
