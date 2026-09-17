@@ -17,10 +17,12 @@ class Base(DeclarativeBase):
 def get_normalized_url(url: str | None) -> str | None:
     if not url:
         return None
+    url = url.strip()
     if url.startswith("postgres://"):
-        return url.replace("postgres://", "postgresql://", 1)
+        return url.replace("postgres://", "postgresql+psycopg://", 1)
+    if url.startswith("postgresql://") and not url.startswith("postgresql+"):
+        return url.replace("postgresql://", "postgresql+psycopg://", 1)
     return url
-
 
 db_url = get_normalized_url(settings.database_url)
 
