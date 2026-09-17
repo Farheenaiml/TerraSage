@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Search, BookOpen, X } from 'lucide-react';
+import { Search, BookOpen, X, Sparkles } from 'lucide-react';
 import type { EvidenceReference, EvidenceType } from '@/models';
 import { evidenceService } from '@/services';
 import { PageHeader } from '@/components/shared/PageHeader';
@@ -46,17 +46,58 @@ export function EvidencePage() {
   useEffect(load, []);
 
   useEffect(() => {
-    if (query.trim()) {
-      evidenceService.getEvidence({ query }).then((results) => {
-        setFiltered(typeFilter === 'all' ? results : results.filter((item) => item.type === typeFilter));
-      }).catch(() => setError('Knowledge search is unavailable.'));
-      return;
+    const q = query.trim().toLowerCase();
+
+    // 1. Instant local search across indexed sources
+    let localMatches = allEvidence;
+    if (q) {
+      localMatches = allEvidence.filter((item) => {
+        const titleMatch = (item.title || '').toLowerCase().includes(q);
+        const summaryMatch = (item.summary || '').toLowerCase().includes(q);
+        const orgMatch = (item.organization || '').toLowerCase().includes(q);
+        const metricMatch = (item.metrics || []).some((m) => m.toLowerCase().includes(q));
+        return titleMatch || summaryMatch || orgMatch || metricMatch;
+      });
     }
-    let results = allEvidence;
+
     if (typeFilter !== 'all') {
-      results = results.filter((e) => e.type === typeFilter);
+      localMatches = localMatches.filter((item) => item.type === typeFilter);
     }
-    setFiltered(results);
+
+    setFiltered(localMatches);
+
+    // 2. Concurrently query server-side deep RAG index if query is provided
+    if (q) {
+      evidenceService
+        .getEvidence({ query: q })
+        .then((remoteResults) => {
+          if (remoteResults && remoteResults.length > 0) {
+            const remoteFiltered =
+              typeFilter === 'all'
+                ? remoteResults
+                : remoteResults.filter((item) => item.type === typeFilter);
+
+            // Merge local and remote results without duplicates by id/title
+            const seen = new Set<string>();
+            const combined: EvidenceReference[] = [];
+
+            for (const item of [...remoteFiltered, ...localMatches]) {
+              const key = (item.title || '') + (item.id || '');
+              if (!seen.has(key)) {
+                seen.add(key);
+                combined.push(item);
+              }
+            }
+
+            if (combined.length > 0) {
+              setFiltered(combined);
+            }
+          }
+        })
+        .catch((err) => {
+          console.warn('Remote knowledge search error, kept local matches:', err);
+        });
+    }
   }, [query, typeFilter, allEvidence]);
 
   const organizations = useMemo(() => {
@@ -81,10 +122,10 @@ export function EvidencePage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search by title, summary, organization, or metric..."
+                placeholder="Search by title, summary, organization, or metric (e.g. soil, carbon, biodiversity, FAO)..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 pr-10"
               />
               {query && (
                 <button
@@ -95,6 +136,25 @@ export function EvidencePage() {
                 </button>
               )}
             </div>
+
+            {/* Suggested quick searches */}
+            <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1 font-medium text-foreground">
+                <Sparkles className="h-3 w-3 text-primary" /> Popular Topics:
+              </span>
+              {['Soil Organic Carbon', 'Biodiversity', 'Agroforestry', 'Conservation Agriculture', 'IPCC'].map(
+                (topic) => (
+                  <button
+                    key={topic}
+                    onClick={() => setQuery(topic)}
+                    className="rounded-full bg-muted/60 hover:bg-muted px-2.5 py-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground border border-border/50"
+                  >
+                    {topic}
+                  </button>
+                )
+              )}
+            </div>
+
             <div className="flex flex-wrap gap-2">
               {typeOptions.map((opt) => (
                 <button
@@ -137,7 +197,11 @@ export function EvidencePage() {
         <EmptyState
           icon={<BookOpen className="h-7 w-7 text-muted-foreground" />}
           title={allEvidence.length === 0 ? 'No evidence sources indexed yet.' : 'No evidence found'}
-          description={allEvidence.length === 0 ? 'Index an authoritative source to begin.' : 'Try adjusting your search query or filters.'}
+          description={
+            allEvidence.length === 0
+              ? 'Index an authoritative source to begin.'
+              : `No sources matched "${query}". Try searching for 'soil', 'biodiversity', or 'FAO'.`
+          }
           action={
             <Button
               variant="outline"
