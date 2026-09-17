@@ -59,3 +59,14 @@ def health() -> dict[str, str]:
 
 app.include_router(recommendations_router, prefix="/api/recommendations")
 app.include_router(conversations_router, prefix="/api/conversations")
+
+
+@app.get("/", tags=["health"])
+def root_status():
+    return {
+        "service": "TerraSage AI Biodiversity Intelligence API",
+        "status": "online",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "health": "/api/health"
+    }
