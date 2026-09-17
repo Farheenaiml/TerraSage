@@ -1,8 +1,10 @@
 let rawBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
-// If running in production on render.com and VITE_API_BASE_URL wasn't provided at build time:
-if (!rawBaseUrl && typeof window !== 'undefined' && window.location.hostname.includes('onrender.com')) {
-  rawBaseUrl = 'https://terrasage-backend.onrender.com';
+// Handle Render's internal service name or missing domain
+if (!rawBaseUrl || rawBaseUrl === 'terrasage-backend' || !rawBaseUrl.includes('.')) {
+  if (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com')) {
+    rawBaseUrl = 'https://terrasage-backend.onrender.com';
+  }
 }
 
 if (rawBaseUrl && !rawBaseUrl.startsWith('http://') && !rawBaseUrl.startsWith('https://')) {
@@ -22,8 +24,11 @@ async function request<T>(
   path: string,
   options: RequestInit & RequestOptions = {},
 ): Promise<T> {
-  const targetBase = API_BASE_URL || (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com') ? 'https://terrasage-backend.onrender.com' : '');
-  
+  let targetBase = API_BASE_URL;
+  if (!targetBase && typeof window !== 'undefined' && window.location.hostname.includes('onrender.com')) {
+    targetBase = 'https://terrasage-backend.onrender.com';
+  }
+
   if (!targetBase) {
     throw new Error(
       'VITE_API_BASE_URL is not configured. Services are running in mock mode.',

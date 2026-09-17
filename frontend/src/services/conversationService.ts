@@ -1,5 +1,5 @@
 import type { Conversation, ConversationMessage, EnvironmentalContext } from '@/models';
-import { request, mockDelay } from './http';
+import { request, mockDelay, API_BASE_URL } from './http';
 import { mockConversations } from '@/data/conversations';
 
 export interface SendMessageResponse {
@@ -31,14 +31,14 @@ export interface ExtendedConversationMessage extends ConversationMessage {
 
 export const conversationService = {
   async getConversations(): Promise<Conversation[]> {
-    if (!import.meta.env.VITE_API_BASE_URL) {
+    if (!API_BASE_URL) {
       return mockDelay(mockConversations);
     }
     return request<Conversation[]>('/api/conversations');
   },
 
   async getConversation(id: string): Promise<Conversation> {
-    if (!import.meta.env.VITE_API_BASE_URL) {
+    if (!API_BASE_URL) {
       const conv = mockConversations.find((c) => c.id === id) || mockConversations[0];
       return mockDelay(conv);
     }
@@ -53,7 +53,7 @@ export const conversationService = {
     content: string,
     signal?: AbortSignal,
   ): Promise<ExtendedConversationMessage> {
-    if (!import.meta.env.VITE_API_BASE_URL) {
+    if (!API_BASE_URL) {
       const mockReply: ExtendedConversationMessage = {
         id: 'msg-' + Date.now(),
         role: 'assistant',
@@ -97,7 +97,7 @@ export const conversationService = {
   },
 
   async createConversation(title: string = "New Conversation"): Promise<Conversation> {
-    if (!import.meta.env.VITE_API_BASE_URL) {
+    if (!API_BASE_URL) {
       const newConv: Conversation = {
         id: 'conv-' + Date.now(),
         title,
