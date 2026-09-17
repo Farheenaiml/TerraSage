@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Warm white background */
+    --background: 42 33% 98%;
+    --foreground: 150 10% 14%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 150 10% 14%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 150 10% 14%;
+
+    /* Forest green primary */
+    --primary: 145 45% 24%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Sage secondary */
+    --secondary: 90 15% 92%;
+    --secondary-foreground: 150 12% 20%;
+
+    --muted: 90 10% 94%;
+    --muted-foreground: 150 6% 42%;
+
+    /* Earth/clay accent */
+    --accent: 35 45% 92%;
+    --accent-foreground: 30 40% 28%;
+
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 145 45% 38%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 80% 50%;
+    --warning-foreground: 30 40% 18%;
+
+    --info: 200 70% 45%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 90 10% 88%;
+    --input: 90 10% 86%;
+    --ring: 145 45% 24%;
+
+    --chart-1: 145 45% 32%;
+    --chart-2: 35 55% 55%;
+    --chart-3: 200 60% 48%;
+    --chart-4: 90 25% 50%;
+    --chart-5: 18 60% 52%;
+
+    --radius: 0.625rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: 'Fraunces', Georgia, serif;
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: 'Fraunces', Georgia, serif;
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted-foreground) / 0.25);
+    border-radius: 9999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .animate-in {
+    animation: animate-in 0.4s ease-out;
+  }
+}
+
+@keyframes animate-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
