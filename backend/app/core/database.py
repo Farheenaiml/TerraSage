@@ -47,6 +47,7 @@ def init_db() -> None:
                 logger.info("pgvector extension notice: %s", e)
         Base.metadata.create_all(bind=engine)
         migrate_knowledge_columns()
+        seed_initial_cloud_data()
         logger.info("Database tables initialized successfully.")
     except Exception as exc:
         logger.warning("Database initialization warning: %s", exc)
@@ -91,3 +92,31 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+
+def seed_initial_cloud_data() -> None:
+    if engine is None:
+        return
+    try:
+        from app.models.recommendations import RecommendationRecord
+        from app.models.environment import EnvironmentalObservation
+        from app.models import Document, DocumentChunk
+        import uuid
+        from datetime import datetime
+
+        with engine.begin() as conn:
+            # Check if recommendations exist
+            rec_count = conn.execute(text('SELECT COUNT(*) FROM "recommendations"')).scalar() or 0
+            if rec_count == 0:
+                conn.execute(text('''
+                    INSERT INTO "recommendations" (id, title, description, rationale, impacted_metrics, expected_impact, time_horizon, confidence, confidence_score, priority, category, status, limitations, created_at)
+                    VALUES 
+                    (:id1, 'Legume Intercropping (Chickpea/Pigeonpea)', 'Integrate deep-rooting nitrogen-fixing legumes into monoculture wheat fields during fallow rotation.', 'Elevates organic matter input while reducing chemical nitrogen dependency in semi-arid zones.', '["soil_organic_carbon", "microbial_diversity"]', '+15-25% SOC over 24-36 months', 'medium-term', 'high', 0.88, 'high', 'regenerative-agriculture', 'accepted', '["Requires seasonal rainfall timing", "Seed inoculation with Rhizobium required"]', :now),
+                    (:id2, 'Conservation Tillage & Stubble Residue Retention', 'Transition to zero-till or minimum-till seed drilling retaining >=30% straw mulch on topsoil.', 'Suppresses evaporative soil moisture deficit and halts wind/water erosion of carbon-rich top layer.', '["soil_moisture", "bulk_density"]', 'Reduces soil evaporation by 30-45%', 'short-term', 'high', 0.92, 'high', 'soil-stewardship', 'proposed', '["Requires specialized zero-till seed drill equipment"]', :now),
+                    (:id3, 'Agroforestry Windbreak & Native Flora Buffers', 'Plant multi-tiered native trees (Azadirachta indica, Acacia nilotica) along perimeter boundary.', 'Moderates local microclimate, creates pollinator corridors, and mitigates particulate dust exposure.', '["biodiversity_richness", "pm25_mitigation"]', '+40% pollinator visits within 3 seasons', 'long-term', 'medium', 0.79, 'medium', 'habitat-restoration', 'suggested', '["3-5 year maturation curve for full canopy"]', :now)
+                '''), {
+                    "id1": str(uuid.uuid4()), "id2": str(uuid.uuid4()), "id3": str(uuid.uuid4()),
+                    "now": datetime.utcnow()
+                })
+                logger.info("Seeded baseline recommendations into database.")
+    except Exception as exc:
+        logger.warning("Cloud data seed notice: %s", exc)

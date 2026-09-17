@@ -1,4 +1,10 @@
 let rawBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+
+// If running in production on render.com and VITE_API_BASE_URL wasn't provided at build time:
+if (!rawBaseUrl && typeof window !== 'undefined' && window.location.hostname.includes('onrender.com')) {
+  rawBaseUrl = 'https://terrasage-backend.onrender.com';
+}
+
 if (rawBaseUrl && !rawBaseUrl.startsWith('http://') && !rawBaseUrl.startsWith('https://')) {
   rawBaseUrl = `https://${rawBaseUrl}`;
 }
@@ -16,14 +22,16 @@ async function request<T>(
   path: string,
   options: RequestInit & RequestOptions = {},
 ): Promise<T> {
-  if (!API_BASE_URL) {
+  const targetBase = API_BASE_URL || (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com') ? 'https://terrasage-backend.onrender.com' : '');
+  
+  if (!targetBase) {
     throw new Error(
       'VITE_API_BASE_URL is not configured. Services are running in mock mode.',
     );
   }
 
   const { signal, ...init } = options;
-  const url = `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  const url = `${targetBase}${path.startsWith('/') ? path : `/${path}`}`;
   const response = await fetch(url, {
     ...init,
     signal,

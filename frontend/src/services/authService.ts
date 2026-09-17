@@ -33,7 +33,7 @@ export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthSession> {
     // Demo mode: local session per Chunk 1 architecture
     const user: User = {
-      ...mockUser,
+      ...mockUser, fullName: 'Zoya Patel', organization: 'Conservation Trust',
       email: credentials.email || mockUser.email,
     };
     const session: AuthSession = { user, token: 'session-' + Date.now() };

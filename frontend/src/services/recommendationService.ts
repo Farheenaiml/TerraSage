@@ -50,8 +50,9 @@ export interface GenerateRecommendationsParams {
 export const recommendationService = {
   async getRecommendations(status?: string): Promise<Recommendation[]> {
     const query = status && status !== 'all' ? `?status=${encodeURIComponent(status)}` : '';
-    const rawList = await request<any[]>(`/api/recommendations${query}`);
-    return rawList.map(normalizeRecommendation);
+    const response = await request<any>(`/api/recommendations${query}`);
+    const items = Array.isArray(response) ? response : (response?.items || []);
+    return items.map(normalizeRecommendation);
   },
 
   async getRecommendation(id: string): Promise<Recommendation> {

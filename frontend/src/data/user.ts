@@ -2,10 +2,10 @@ import type { User } from '@/models';
 
 export const mockUser: User = {
   id: 'user-001',
-  email: 'dr.martinez@terrasage.io',
-  fullName: 'Dr. Elena Martinez',
+  email: 'zoya.patel@terrasage.earth',
+  fullName: 'Zoya Patel',
   avatarUrl: undefined,
-  organization: 'Pacific Northwest Conservation Trust',
+  organization: 'Conservation Trust',
   role: 'Environmental Scientist',
   createdAt: '2026-08-01T10:00:00Z',
 };
