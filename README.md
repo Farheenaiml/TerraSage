@@ -222,6 +222,57 @@ The Frontend UI will be accessible at: `http://localhost:5173`
 
 ---
 
+
+---
+
+## Cloud Deployment Guide
+
+The repository includes production-ready configurations for **Render**, **Vercel**, and **Docker**:
+
+### Option 1: 1-Click Deployment on Render.com (Recommended)
+Because [`render.yaml`](render.yaml) is configured in the repository root:
+1. Sign in to [Render.com](https://render.com) using your GitHub account.
+2. Click **New +** -> **Blueprint**.
+3. Select the repository: `Farheenaiml/TerraSage`.
+4. Render will automatically detect the blueprint and provision:
+   - **Cloud PostgreSQL** (Database name: `terrasage`)
+   - **FastAPI Web Service** (`terrasage-backend`)
+   - **React + Vite Static Site** (`terrasage-frontend`)
+5. In the environment variables for `terrasage-backend`, enter your `LLM_API_KEY` (Groq or OpenAI key).
+6. Click **Apply**. Both your backend API and frontend will be live with free SSL certificates!
+
+---
+
+### Option 2: Vercel (Frontend) + Render / Railway (Backend)
+- **Frontend (Vercel)**:
+  1. Go to [Vercel](https://vercel.com) and click **Add New Project** -> import `Farheenaiml/TerraSage`.
+  2. Set **Root Directory** to `frontend`.
+  3. Under **Environment Variables**, add:
+     - `VITE_API_BASE_URL`: `https://your-backend-service.onrender.com`
+  4. Click **Deploy**. Vercel will build and serve the app with global CDN distribution.
+- **Backend (Render / Railway)**:
+  1. Create a new Web Service pointing to `Farheenaiml/TerraSage` (Root Directory: `backend`).
+  2. Build Command: `pip install -r requirements.txt`
+  3. Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+  4. Add environment variables from `backend/.env.example`.
+
+---
+
+### Option 3: Full-Stack Docker Compose (VPS / Cloud VM)
+Run the entire ecosystem (pgvector database, backend, and Nginx-served frontend) with one command:
+
+```bash
+# Clone the repository
+git clone https://github.com/Farheenaiml/TerraSage.git
+cd TerraSage
+
+# Launch all 3 services
+docker-compose up -d --build
+```
+- Frontend: `http://localhost:80`
+- Backend API: `http://localhost:8000/docs`
+- PostgreSQL pgvector: `localhost:5432`
+
 ## Automated Test Suite
 
 Run the full automated test suite to verify backend stability and compliance:
