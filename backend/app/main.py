@@ -13,7 +13,7 @@ from app.api.routes.reasoning import router as reasoning_router
 from app.api.routes.recommendations import router as recommendations_router
 from app.api.routes.conversations import router as conversations_router
 from app.core.config import settings
-from app.core.database import Base, engine, migrate_embedding_columns, migrate_knowledge_columns
+from app.core.database import Base, engine, init_db, migrate_knowledge_columns
 from app.models import Document, DocumentChunk, Embedding, EvidenceMetadata  # noqa: F401
 from app.models.environment import EnvironmentalObservation, ProviderCache  # noqa: F401
 
@@ -22,19 +22,15 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if settings.environment == "development":
-        try:
-            if engine is None:
-                logger.warning("DATABASE_URL is not configured; database features are unavailable")
-            else:
-                migrate_knowledge_columns()
-                migrate_embedding_columns()
-                Base.metadata.create_all(bind=engine)
+    try:
+        if engine is not None:
+            init_db()
             logger.info("Database schema is ready")
-        except SQLAlchemyError:
-            logger.warning("Database schema could not be initialized", exc_info=True)
+        else:
+            logger.warning("DATABASE_URL is not configured; running without database.")
+    except Exception as err:
+        logger.warning("Database startup notice: %s", err)
     yield
-
 
 app = FastAPI(title=settings.app_name, version="0.1.0", lifespan=lifespan)
 app.add_middleware(

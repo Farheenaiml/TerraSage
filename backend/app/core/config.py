@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     app_name: str = "TerraSage API"
     environment: str = "development"
     database_url: str | None = None
-    cors_origins: str = "http://localhost:5173"
+    cors_origins: str = "*"
     sql_echo: bool = False
     pgvector_enabled: bool = True
     embedding_provider: str = "local"

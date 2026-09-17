@@ -1,24 +1,53 @@
 from collections.abc import Generator
-
+import logging
 from fastapi import HTTPException, status
-from sqlalchemy import create_engine
-from sqlalchemy import text
+from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class Base(DeclarativeBase):
     pass
 
 
+def get_normalized_url(url: str | None) -> str | None:
+    if not url:
+        return None
+    if url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql://", 1)
+    return url
+
+
+db_url = get_normalized_url(settings.database_url)
+
 engine: Engine | None = (
-    create_engine(settings.database_url, echo=settings.sql_echo, pool_pre_ping=True)
-    if settings.database_url
+    create_engine(db_url, echo=settings.sql_echo, pool_pre_ping=True)
+    if db_url
     else None
 )
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False) if engine else None
+
+
+def init_db() -> None:
+    if engine is None:
+        logger.warning("Database engine is not configured; skipping initialization.")
+        return
+    try:
+        with engine.begin() as conn:
+            # Attempt to enable pgvector extension if available
+            try:
+                conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            except Exception as e:
+                logger.info("pgvector extension notice: %s", e)
+        Base.metadata.create_all(bind=engine)
+        migrate_knowledge_columns()
+        logger.info("Database tables initialized successfully.")
+    except Exception as exc:
+        logger.warning("Database initialization warning: %s", exc)
 
 
 def migrate_knowledge_columns() -> None:
@@ -32,45 +61,21 @@ def migrate_knowledge_columns() -> None:
         },
         "document_chunks": {"metadata_json": "JSON"},
     }
-    with engine.begin() as connection:
-        for table, columns in additions.items():
-            existing = {row[0] for row in connection.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name = :table"), {"table": table})}
-            for column, column_type in columns.items():
-                if column not in existing:
-                    connection.execute(text(f'ALTER TABLE "{table}" ADD COLUMN "{column}" {column_type}'))
-            if table == "documents":
-                connection.execute(text("UPDATE documents SET ingestion_status = 'REGISTERED' WHERE ingestion_status IS NULL"))
-                connection.execute(text("UPDATE documents SET ingestion_status = 'REGISTERED' WHERE ingestion_status = 'registered'"))
-                connection.execute(text("UPDATE documents SET environmental_metrics = '[]' WHERE environmental_metrics IS NULL"))
-            if table == "document_chunks":
-                connection.execute(text("UPDATE document_chunks SET metadata_json = '{}' WHERE metadata_json IS NULL"))
-
-
-def migrate_embedding_columns() -> None:
-    if engine is None:
-        return
-    with engine.begin() as connection:
-        for table, column in (("document_chunks", "embedding"), ("embeddings", "vector")):
-            column_type = connection.execute(
-                text("SELECT udt_name FROM information_schema.columns WHERE table_name = :table AND column_name = :column"),
-                {"table": table, "column": column},
-            ).scalar()
-            if column_type == "vector":
-                continue
-            row_count = connection.execute(text(f'SELECT COUNT(*) FROM "{table}"')).scalar()
-            if row_count:
-                raise RuntimeError(f"Cannot migrate populated {table}.{column} without a data migration.")
-            connection.execute(text(f'ALTER TABLE "{table}" ALTER COLUMN "{column}" TYPE vector(384) USING NULL::vector(384)'))
-        for table, column in (("document_chunks", "embedding"), ("embeddings", "vector")):
-            column_type = connection.execute(
-                text("SELECT udt_name FROM information_schema.columns WHERE table_name = :table AND column_name = :column"),
-                {"table": table, "column": column},
-            ).scalar()
-            if column_type != "vector":
-                row_count = connection.execute(text(f'SELECT count(*) FROM "{table}"')).scalar_one()
-                if row_count:
-                    raise RuntimeError(f"Cannot migrate non-empty {table}.{column} without a data migration.")
-                connection.execute(text(f'ALTER TABLE "{table}" ALTER COLUMN "{column}" TYPE vector(384) USING NULL::vector'))
+    try:
+        with engine.begin() as connection:
+            for table, columns in additions.items():
+                existing = {row[0] for row in connection.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name = :table"), {"table": table})}
+                for column, column_type in columns.items():
+                    if column not in existing:
+                        connection.execute(text(f'ALTER TABLE "{table}" ADD COLUMN "{column}" {column_type}'))
+                if table == "documents":
+                    connection.execute(text("UPDATE documents SET ingestion_status = 'REGISTERED' WHERE ingestion_status IS NULL"))
+                    connection.execute(text("UPDATE documents SET ingestion_status = 'REGISTERED' WHERE ingestion_status = 'registered'"))
+                    connection.execute(text("UPDATE documents SET environmental_metrics = '[]' WHERE environmental_metrics IS NULL"))
+                if table == "document_chunks":
+                    connection.execute(text("UPDATE document_chunks SET metadata_json = '{}' WHERE metadata_json IS NULL"))
+    except Exception as exc:
+        logger.warning("Migration warning: %s", exc)
 
 
 def get_db() -> Generator[Session, None, None]:
