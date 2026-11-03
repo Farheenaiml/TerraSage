@@ -20,6 +20,7 @@ import { EvidenceCard } from '@/components/shared/EvidenceCard';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { getRequestErrorMessage } from '@/services/http';
 
 const statusOptions: { value: Recommendation['status']; label: string }[] = [
   { value: 'suggested', label: 'Suggested' },
@@ -41,7 +42,7 @@ export function RecommendationDetailPage() {
     recommendationService
       .getRecommendation(id)
       .then(setRec)
-      .catch(() => setError('Failed to load recommendation.'))
+      .catch((err) => setError(getRequestErrorMessage(err, 'Failed to load recommendation.')))
       .finally(() => setLoading(false));
   };
 

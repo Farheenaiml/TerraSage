@@ -40,6 +40,28 @@ python -m app.knowledge.ingest --index
 
 The API is available at `http://localhost:8000`, with interactive docs at `/docs`.
 
+## Render database troubleshooting
+
+The backend's `GET /api/health` response must report `"status":"ok"` and
+`"database":"connected"`. If it reports an unavailable database, dashboard,
+environment profile, conversations, and recommendations cannot load.
+
+In the Render dashboard:
+
+1. Confirm the `terrasage-db` PostgreSQL database is available and has not
+   expired or been suspended. Back up any data before replacing a database.
+2. Open the `terrasage-backend` service's **Environment** settings and confirm
+   `DATABASE_URL` is linked to the active PostgreSQL database's internal
+   connection string. Do not paste the URL into public issues or logs.
+3. Confirm the backend and database are in the same Render region, save the
+   environment change, then manually redeploy the backend.
+4. Open `https://terrasage-backend.onrender.com/api/health`. Verify the JSON
+   reports `"database":"connected"`, then reload the frontend.
+
+If the database has expired or is missing, create a replacement PostgreSQL
+database, update the backend's `DATABASE_URL` to that database's internal
+connection string, and redeploy. A replacement database starts empty.
+
 ## Endpoints
 
 - `GET /api/health`

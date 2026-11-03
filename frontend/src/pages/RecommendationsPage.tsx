@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { getRequestErrorMessage } from '@/services/http';
 
 type FilterStatus = 'all' | Recommendation['status'];
 
@@ -50,7 +51,7 @@ export function RecommendationsPage() {
     recommendationService
       .getRecommendations()
       .then(setRecommendations)
-      .catch(() => setError('Failed to load recommendations.'))
+      .catch((err) => setError(getRequestErrorMessage(err, 'Failed to load recommendations.')))
       .finally(() => setLoading(false));
   };
 

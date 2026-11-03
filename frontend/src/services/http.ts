@@ -48,10 +48,23 @@ async function request<T>(
 
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}));
-    throw new Error(errorBody.message || `Request failed with status ${response.status}`);
+    const message =
+      typeof errorBody.detail === 'string'
+        ? errorBody.detail
+        : typeof errorBody.message === 'string'
+          ? errorBody.message
+          : `Request failed with status ${response.status}`;
+    throw new Error(message);
   }
 
   return response.json() as Promise<T>;
+}
+
+export function getRequestErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) {
+    return `${fallback} ${error.message}`;
+  }
+  return fallback;
 }
 
 export { request, API_BASE_URL };

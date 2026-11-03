@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { getRequestErrorMessage } from '@/services/http';
 
 export function ConversationsPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -24,7 +25,7 @@ export function ConversationsPage() {
     conversationService
       .getConversations()
       .then(setConversations)
-      .catch(() => setError('Failed to load conversations.'))
+      .catch((err) => setError(getRequestErrorMessage(err, 'Failed to load conversations.')))
       .finally(() => setLoading(false));
   };
 
@@ -35,8 +36,8 @@ export function ConversationsPage() {
     try {
       const newConv = await conversationService.createConversation('New Conversation');
       navigate(`/conversations/${newConv.id}`);
-    } catch {
-      setError('Failed to create a new conversation.');
+    } catch (err) {
+      setError(getRequestErrorMessage(err, 'Failed to create a new conversation.'));
       setCreating(false);
     }
   };

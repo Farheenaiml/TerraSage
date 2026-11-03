@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { getRequestErrorMessage } from '@/services/http';
 
 const typeOptions: { value: EvidenceType | 'all'; label: string }[] = [
   { value: 'all', label: 'All types' },
@@ -39,7 +40,7 @@ export function EvidencePage() {
         setAllEvidence(data);
         setFiltered(data);
       })
-      .catch(() => setError('Failed to load evidence library.'))
+      .catch((err) => setError(getRequestErrorMessage(err, 'Failed to load evidence library.')))
       .finally(() => setLoading(false));
   };
 

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -12,6 +14,8 @@ from app.recommendations.schemas import (
     RecommendationStatusUpdateRequest,
 )
 from app.recommendations import service as rec_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="", tags=["recommendations"])
 
@@ -29,6 +33,15 @@ def generate_recommendations(
         return rec_service.generate_recommendations(request, db=db)
     except ValueError as err:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
+    except SQLAlchemyError as err:
+        logger.exception("Recommendation request failed due to a database error")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                "Database operation failed. Check the Render PostgreSQL service "
+                "and the backend DATABASE_URL setting."
+            ),
+        ) from err
     except Exception as err:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

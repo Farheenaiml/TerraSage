@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { getRequestErrorMessage } from '@/services/http';
 
 const PRESETS = [
   { name: 'Nashik Farm, MH', lat: 19.9975, lon: 73.7898 },
@@ -46,7 +47,7 @@ export function EnvironmentPage() {
     environmentService
       .getProfile(lat, lon)
       .then(setProfile)
-      .catch(() => setError('Failed to load real environmental profile data for coordinates.'))
+      .catch((err) => setError(getRequestErrorMessage(err, 'Failed to load real environmental profile data for coordinates.')))
       .finally(() => setLoading(false));
   };
 

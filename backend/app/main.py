@@ -1,8 +1,9 @@
 from contextlib import asynccontextmanager
 import logging
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -33,6 +34,26 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(title=settings.app_name, version="0.1.0", lifespan=lifespan)
+
+
+@app.exception_handler(SQLAlchemyError)
+async def handle_database_error(_request: Request, exc: SQLAlchemyError) -> JSONResponse:
+    logger.error(
+        "Database request failed (%s)",
+        type(exc).__name__,
+        exc_info=(type(exc), exc, exc.__traceback__),
+    )
+    return JSONResponse(
+        status_code=503,
+        content={
+            "detail": (
+                "Database operation failed. Check the Render PostgreSQL service "
+                "and the backend DATABASE_URL setting."
+            )
+        },
+    )
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
@@ -55,6 +76,7 @@ def health() -> dict[str, str]:
             connection.execute(text("SELECT 1"))
         return {"status": "ok", "database": "connected"}
     except SQLAlchemyError:
+        logger.exception("Database health check failed")
         return {"status": "degraded", "database": "unavailable"}
 
 app.include_router(recommendations_router, prefix="/api/recommendations")

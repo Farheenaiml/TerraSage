@@ -7,6 +7,7 @@ import { LoadingState } from '@/components/shared/LoadingState';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { getRequestErrorMessage } from '@/services/http';
 
 export function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -16,7 +17,7 @@ export function DashboardPage() {
   const load = () => {
     setLoading(true);
     setError('');
-    dashboardService.getDashboard().then(setData).catch(() => setError('Failed to load dashboard data.'))
+    dashboardService.getDashboard().then(setData).catch((err) => setError(getRequestErrorMessage(err, 'Failed to load dashboard data.')))
       .finally(() => setLoading(false));
   };
 

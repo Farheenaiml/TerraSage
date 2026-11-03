@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { LoadingState } from '@/components/shared/LoadingState';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { cn } from '@/lib/utils';
+import { getRequestErrorMessage } from '@/services/http';
 
 const EXAMPLE_PROMPTS = [
   {
@@ -72,7 +73,7 @@ export function ConversationDetailPage() {
     conversationService
       .getConversation(id)
       .then(setConversation)
-      .catch(() => setError('Failed to load conversation.'))
+      .catch((err) => setError(getRequestErrorMessage(err, 'Failed to load conversation.')))
       .finally(() => setLoading(false));
   };
 
@@ -102,8 +103,8 @@ export function ConversationDetailPage() {
           environmentalContext: { known: [], missing: [] },
         };
         navigate(`/conversations/${created.id}`, { replace: true });
-      } catch {
-        setError('Failed to create conversation on backend.');
+      } catch (err) {
+        setError(getRequestErrorMessage(err, 'Failed to create conversation on backend.'));
         setSending(false);
         return;
       }
